@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veikkausliiga 2026 - Mestaruussarjan Skenaariokone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: '#1E3A8A' } } }
+        }
+    </script>
+    <style>
+        [v-cloak] { display: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        /* Poistetaan nuolivalitsimet numero-inputeista */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased p-4 md:p-8">
+
+<div id="app" class="max-w-7xl mx-auto" v-cloak>
+    
+    <!-- Ylätunniste -->
+    <header class="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-xl shadow-sm mb-6 border-l-4 border-green-600">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Veikkausliiga 2026 - Mestaruussarja</h1>
+            <p class="text-sm text-gray-500">Sisältää runkosarjan pohjapisteet. Testaa mitalitaiston lopputulemat!</p>
+        </div>
+        
+        <div class="mt-4 md:mt-0 flex items-center bg-gray-100 p-2 rounded-lg">
+            <button @click="mode = 'admin'" 
+                    :class="mode === 'admin' ? 'bg-white shadow-sm font-bold text-red-600' : 'text-gray-500'" 
+                    class="px-4 py-2 rounded-md transition-all text-sm flex items-center gap-2">
+                <i class="fa-solid fa-lock"></i> Kirjaa virallisia
+            </button>
+            <button @click="mode = 'scenario'" 
+                    :class="mode === 'scenario' ? 'bg-white shadow-sm font-bold text-blue-600' : 'text-gray-500'" 
+                    class="px-4 py-2 rounded-md transition-all text-sm flex items-center gap-2">
+                <i class="fa-solid fa-flask"></i> Skenaariotila
+            </button>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+        
+        <!-- VASEN PALSTA: Sarjataulukko -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                
+                <div class="bg-gray-800 text-white p-4 flex justify-between items-center">
+                    <h2 class="font-bold text-lg tracking-wide uppercase">Sarjataulukko</h2>
+                    <span v-if="mode === 'scenario'" class="text-[10px] bg-blue-500 px-2 py-1 rounded text-white font-bold uppercase tracking-wider animate-pulse">Skenaariot mukana</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-100 text-gray-600 border-b border-gray-300">
+                            <tr>
+                                <th class="px-3 py-3 w-6 text-center">Sija</th>
+                                <th class="px-2 py-3 font-bold">Joukkue</th>
+                                <th class="px-1 py-3 text-center" title="Ottelut">O</th>
+                                <th class="px-1 py-3 text-center" title="Voitot">V</th>
+                                <th class="px-1 py-3 text-center" title="Tasapelit">T</th>
+                                <th class="px-1 py-3 text-center" title="Häviöt">H</th>
+                                <th class="px-1 py-3 text-center text-gray-400" title="Tehdyt maalit">TM</th>
+                                <th class="px-1 py-3 text-center text-gray-400" title="Päästetyt maalit">PM</th>
+                                <th class="px-1 py-3 text-center font-bold" title="Maaliero">ME</th>
+                                <th class="px-3 py-3 text-center font-black text-lg text-brand">P</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(team, index) in standings" :key="team.name" 
+                                class="border-b last:border-0 transition-colors"
+                                :class="[
+                                    index === 0 ? 'bg-yellow-50/60 border-l-4 border-l-yellow-400' : 
+                                    index === 1 ? 'bg-gray-100/60 border-l-4 border-l-gray-400' : 
+                                    index === 2 ? 'bg-orange-50/60 border-l-4 border-l-orange-500' : 'border-l-4 border-l-transparent'
+                                ]">
+                                <td class="px-3 py-3 font-bold text-gray-400 text-center">{{ index + 1 }}.</td>
+                                <td class="px-2 py-3 font-bold text-gray-800 text-base whitespace-nowrap">{{ team.name }}</td>
+                                <td class="px-1 py-3 text-center">{{ team.matches }}</td>
+                                <td class="px-1 py-3 text-center">{{ team.wins }}</td>
+                                <td class="px-1 py-3 text-center">{{ team.draws }}</td>
+                                <td class="px-1 py-3 text-center">{{ team.losses }}</td>
+                                <td class="px-1 py-3 text-center text-gray-500">{{ team.gf }}</td>
+                                <td class="px-1 py-3 text-center text-gray-500">{{ team.ga }}</td>
+                                <td class="px-1 py-3 text-center font-bold" :class="team.gd > 0 ? 'text-green-600' : (team.gd < 0 ? 'text-red-500' : '')">
+                                    {{ team.gd > 0 ? '+' : '' }}{{ team.gd }}
+                                </td>
+                                <td class="px-3 py-3 text-center font-black text-xl text-brand">{{ team.pts }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bg-gray-50 p-3 text-xs text-gray-500 border-t flex justify-between">
+                    <span>Mestaruussarja jatkaa suoraan runkosarjan pisteistä.</span>
+                    <span>Sijoitus: Pisteet &rarr; Maaliero &rarr; Tehdyt maalit.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- OIKEA PALSTA: Otteluohjelma päivittäin -->
+        <div class="lg:col-span-5 bg-white rounded-xl shadow-sm p-4 h-[800px] flex flex-col border border-gray-200">
+            <div class="mb-4 pb-3 border-b shrink-0 flex justify-between items-center">
+                <h2 class="font-bold text-lg">Otteluohjelma</h2>
+                <button v-if="mode === 'scenario'" @click="clearScenarios" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors border border-red-100">
+                    <i class="fa-solid fa-trash-can"></i> Nollaa skenaariot
+                </button>
+            </div>
+
+            <!-- Scrollattava ottelulista -->
+            <div class="overflow-y-auto pr-2 space-y-5 flex-1 pb-10">
+                <div v-for="day in matchesByDate" :key="day.date">
+                    <h3 class="font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-md inline-block mb-3 border-l-2 border-gray-400 text-sm">
+                        {{ day.date }}
+                    </h3>
+                    <div class="space-y-2 pl-2">
+                        <div v-for="match in day.matches" :key="match.id" class="border rounded-lg p-2.5 flex flex-col xl:flex-row justify-between items-center gap-3 transition-colors" :class="getMatchStyle(match.id)">
+                            
+                            <!-- Joukkueet -->
+                            <div class="flex items-center w-full xl:w-5/12 text-sm">
+                                <div class="flex-1 text-right truncate font-bold">{{ match.home }}</div>
+                                <div class="px-2 text-gray-300">-</div>
+                                <div class="flex-1 truncate font-bold">{{ match.away }}</div>
+                            </div>
+
+                            <!-- Tuloksen syöttö (Jalkapallomalli) -->
+                            <div class="w-full xl:w-7/12 flex justify-end shrink-0">
+                                
+                                <!-- Lukittu / Virallinen -->
+                                <div v-if="officialResults[match.id]" class="flex items-center gap-2">
+                                    <span class="font-black text-lg bg-gray-200 px-3 py-1 rounded border border-gray-300 shadow-inner">
+                                        {{ officialResults[match.id].home }} - {{ officialResults[match.id].away }}
+                                    </span>
+                                    <i class="fa-solid fa-lock text-gray-400 text-sm"></i>
+                                    <button v-if="mode === 'admin'" @click="removeResult(match.id, 'official')" class="text-red-400 hover:text-red-600 ml-1 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                
+                                <!-- Skenaario valittuna -->
+                                <div v-else-if="mode === 'scenario' && scenarioResults[match.id]" class="flex items-center gap-2">
+                                    <span class="font-black text-lg text-blue-700 bg-blue-100 px-3 py-1 rounded border border-blue-300 shadow-inner italic">
+                                        {{ scenarioResults[match.id].home }} - {{ scenarioResults[match.id].away }}
+                                    </span>
+                                    <button @click="removeResult(match.id, 'scenario')" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                
+                                <!-- Ei tulosta - Syöttökentät -->
+                                <div v-else-if="mode === 'scenario'" class="flex items-center gap-2">
+                                    <!-- 1x2 Pikanapit -->
+                                    <div class="flex bg-gray-100 rounded border border-gray-200 overflow-hidden shadow-sm">
+                                        <button @click="setResult(match.id, '1-0', 'scenario')" class="px-2.5 py-1 text-xs font-bold hover:bg-gray-200 border-r border-gray-200 text-gray-700">1</button>
+                                        <button @click="setResult(match.id, '1-1', 'scenario')" class="px-2.5 py-1 text-xs font-bold hover:bg-gray-200 border-r border-gray-200 text-gray-700">X</button>
+                                        <button @click="setResult(match.id, '0-1', 'scenario')" class="px-2.5 py-1 text-xs font-bold hover:bg-gray-200 text-gray-700">2</button>
+                                    </div>
+                                    <!-- Manuaalinen maalisyöttö -->
+                                    <div class="flex items-center bg-white border border-gray-300 rounded overflow-hidden shadow-sm">
+                                        <input v-model.number="tempInputs[match.id].h" type="number" min="0" class="w-7 text-center py-1 outline-none font-bold text-sm bg-gray-50 focus:bg-blue-50">
+                                        <span class="text-gray-400 bg-gray-50 py-1">-</span>
+                                        <input v-model.number="tempInputs[match.id].a" type="number" min="0" class="w-7 text-center py-1 outline-none font-bold text-sm bg-gray-50 focus:bg-blue-50">
+                                        <button @click="saveTempResult(match.id, 'scenario')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 border-l border-blue-600 transition-colors">
+                                            <i class="fa-solid fa-check text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Admin-tilan syöttö (vain manuaalinen) -->
+                                <div v-else-if="mode === 'admin'" class="flex items-center bg-white border border-gray-300 rounded overflow-hidden shadow-sm">
+                                    <input v-model.number="tempInputs[match.id].h" type="number" min="0" class="w-8 text-center py-1 outline-none font-bold bg-gray-50">
+                                    <span class="text-gray-400 bg-gray-50 py-1">-</span>
+                                    <input v-model.number="tempInputs[match.id].a" type="number" min="0" class="w-8 text-center py-1 outline-none font-bold bg-gray-50">
+                                    <button @click="saveTempResult(match.id, 'official')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 border-l border-red-600 font-bold text-xs uppercase">
+                                        Tallenna
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-if="matchesByDate.length === 0" class="text-center text-gray-500 py-8 italic">
+                    <span v-if="mode === 'scenario'">Kaikki pelit on jo pelattu ja vahvistettu!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const { createApp, ref, computed, watch, onMounted } = Vue;
+
+createApp({
+    setup() {
+        const mode = ref('scenario');
+        
+        // Runkosarjan lopputilanne pohjana
+        const baseStats = {
+            'KuPS':       { matches: 22, wins: 12, draws: 7, losses: 3, gf: 38, ga: 23, pts: 43 },
+            'FC Inter':   { matches: 22, wins: 11, draws: 9, losses: 2, gf: 29, ga: 16, pts: 42 },
+            'HJK':        { matches: 22, wins: 11, draws: 4, losses: 7, gf: 36, ga: 27, pts: 37 },
+            'IF Gnistan': { matches: 22, wins: 10, draws: 6, losses: 6, gf: 36, ga: 29, pts: 36 },
+            'AC Oulu':    { matches: 22, wins: 10, draws: 4, losses: 8, gf: 25, ga: 25, pts: 34 },
+            'VPS':        { matches: 22, wins: 9,  draws: 6, losses: 7, gf: 29, ga: 22, pts: 33 }
+        };
+
+        // Mestaruussarjan otteluohjelma (30 ottelua top-6 keskenään)
+        const rawMatches = [
+            { date: '8.9.', home: 'VPS', away: 'AC Oulu' }, { date: '8.9.', home: 'IF Gnistan', away: 'KuPS' },
+            { date: '9.9.', home: 'HJK', away: 'FC Inter' }, { date: '12.9.', home: 'AC Oulu', away: 'IF Gnistan' },
+            { date: '13.9.', home: 'KuPS', away: 'HJK' }, { date: '14.9.', home: 'FC Inter', away: 'VPS' },
+            { date: '18.9.', home: 'AC Oulu', away: 'FC Inter' }, { date: '18.9.', home: 'IF Gnistan', away: 'HJK' },
+            { date: '19.9.', home: 'VPS', away: 'KuPS' }, { date: '7.10.', home: 'IF Gnistan', away: 'FC Inter' },
+            { date: '8.10.', home: 'HJK', away: 'VPS' }, { date: '8.10.', home: 'KuPS', away: 'AC Oulu' },
+            { date: '11.10.', home: 'FC Inter', away: 'KuPS' }, { date: '12.10.', home: 'VPS', away: 'IF Gnistan' },
+            { date: '12.10.', home: 'AC Oulu', away: 'HJK' }, { date: '17.10.', home: 'HJK', away: 'IF Gnistan' },
+            { date: '17.10.', home: 'FC Inter', away: 'AC Oulu' }, { date: '18.10.', home: 'KuPS', away: 'VPS' },
+            { date: '24.10.', home: 'VPS', away: 'FC Inter' }, { date: '24.10.', home: 'IF Gnistan', away: 'AC Oulu' },
+            { date: '25.10.', home: 'HJK', away: 'KuPS' }, { date: '28.10.', home: 'AC Oulu', away: 'VPS' },
+            { date: '29.10.', home: 'FC Inter', away: 'HJK' }, { date: '29.10.', home: 'KuPS', away: 'IF Gnistan' },
+            { date: '1.11.', home: 'AC Oulu', away: 'KuPS' }, { date: '2.11.', home: 'FC Inter', away: 'IF Gnistan' },
+            { date: '2.11.', home: 'VPS', away: 'HJK' }, { date: '8.11.', home: 'HJK', away: 'AC Oulu' },
+            { date: '8.11.', home: 'IF Gnistan', away: 'VPS' }, { date: '8.11.', home: 'KuPS', away: 'FC Inter' }
+        ].map((m, i) => ({ ...m, id: i + 1 }));
+
+        const officialResults = ref({});
+        const scenarioResults = ref({});
+        const tempInputs = ref({}); // Manuaalista maalisyöttöä varten
+
+        // Alustetaan tempInputs kaikille peleille
+        rawMatches.forEach(m => { tempInputs.value[m.id] = { h: null, a: null }; });
+
+        onMounted(() => {
+            const savedOfficial = localStorage.getItem('vl26_official');
+            const savedScenario = localStorage.getItem('vl26_scenario');
+            if (savedOfficial) officialResults.value = JSON.parse(savedOfficial);
+            if (savedScenario) scenarioResults.value = JSON.parse(savedScenario);
+        });
+
+        watch(officialResults, (newVal) => localStorage.setItem('vl26_official', JSON.stringify(newVal)), { deep: true });
+        watch(scenarioResults, (newVal) => localStorage.setItem('vl26_scenario', JSON.stringify(newVal)), { deep: true });
+
+        const matchesByDate = computed(() => {
+            const grouped = {};
+            rawMatches.forEach(m => {
+                // Piilotetaan viralliset tulokset skenaariotilassa selkeyden vuoksi
+                if (mode.value === 'scenario' && officialResults.value[m.id]) return;
+                
+                if(!grouped[m.date]) grouped[m.date] = [];
+                grouped[m.date].push(m);
+            });
+            // Hieman robustimpi järjestely päivämäärille (esim "8.9." -> 908, "12.10." -> 1012)
+            const parseDate = (d) => {
+                let parts = d.replace('.','').split('.'); // '8.9' -> ['8', '9']
+                return parseInt(parts[1]) * 100 + parseInt(parts[0]);
+            };
+            return Object.keys(grouped).sort((a,b) => parseDate(a) - parseDate(b)).map(date => ({
+                date, matches: grouped[date]
+            }));
+        });
+
+        const setResult = (matchId, resultString, target) => {
+            const [h, a] = resultString.split('-').map(Number);
+            if (target === 'official') {
+                officialResults.value[matchId] = { home: h, away: a };
+                delete scenarioResults.value[matchId];
+            } else {
+                scenarioResults.value[matchId] = { home: h, away: a };
+            }
+        };
+
+        const saveTempResult = (matchId, target) => {
+            const h = tempInputs.value[matchId].h;
+            const a = tempInputs.value[matchId].a;
+            if(h !== null && a !== null && h !== '' && a !== '') {
+                setResult(matchId, `${h}-${a}`, target);
+                // Nollataan kentät tallennuksen jälkeen
+                tempInputs.value[matchId].h = null;
+                tempInputs.value[matchId].a = null;
+            }
+        };
+
+        const removeResult = (matchId, target) => {
+            if (target === 'official') delete officialResults.value[matchId];
+            else delete scenarioResults.value[matchId];
+        };
+
+        const clearScenarios = () => { if(confirm('Haluatko varmasti tyhjentää kaikki skenaariot?')) scenarioResults.value = {}; };
+
+        const getMatchStyle = (matchId) => {
+            if (officialResults.value[matchId]) return 'bg-gray-50 border-gray-300 opacity-90';
+            if (mode.value === 'scenario' && scenarioResults.value[matchId]) return 'bg-blue-50/40 border-blue-300';
+            return 'bg-white border-gray-100 hover:border-gray-300';
+        };
+
+        const standings = computed(() => {
+            let table = {};
+            // 1. Alustetaan pohjatilastot
+            Object.keys(baseStats).forEach(team => {
+                table[team] = { 
+                    name: team, 
+                    matches: baseStats[team].matches, 
+                    wins: baseStats[team].wins, 
+                    draws: baseStats[team].draws, 
+                    losses: baseStats[team].losses, 
+                    gf: baseStats[team].gf, 
+                    ga: baseStats[team].ga, 
+                    gd: baseStats[team].gf - baseStats[team].ga,
+                    pts: baseStats[team].pts 
+                };
+            });
+
+            // 2. Lisätään pelatut ottelut (viralliset ja skenaariot)
+            rawMatches.forEach(m => {
+                let res = officialResults.value[m.id];
+                if (mode.value === 'scenario' && !res) res = scenarioResults.value[m.id];
+                
+                if (res) {
+                    table[m.home].matches++;
+                    table[m.away].matches++;
+                    
+                    table[m.home].gf += res.home;
+                    table[m.home].ga += res.away;
+                    table[m.away].gf += res.away;
+                    table[m.away].ga += res.home;
+                    
+                    table[m.home].gd = table[m.home].gf - table[m.home].ga;
+                    table[m.away].gd = table[m.away].gf - table[m.away].ga;
+                    
+                    if (res.home > res.away) {
+                        table[m.home].wins++;
+                        table[m.away].losses++;
+                        table[m.home].pts += 3;
+                    } else if (res.home === res.away) {
+                        table[m.home].draws++;
+                        table[m.away].draws++;
+                        table[m.home].pts += 1;
+                        table[m.away].pts += 1;
+                    } else {
+                        table[m.away].wins++;
+                        table[m.home].losses++;
+                        table[m.away].pts += 3;
+                    }
+                }
+            });
+
+            // 3. Järjestetään Jalkapallosäännöillä: 1. Pisteet, 2. Maaliero, 3. Tehdyt maalit, 4. Voitot
+            return Object.values(table).sort((a, b) => {
+                if (b.pts !== a.pts) return b.pts - a.pts;
+                if (b.gd !== a.gd) return b.gd - a.gd;
+                if (b.gf !== a.gf) return b.gf - a.gf;
+                return b.wins - a.wins;
+            });
+        });
+
+        return {
+            mode, baseStats, matchesByDate, 
+            officialResults, scenarioResults, tempInputs, standings,
+            setResult, saveTempResult, removeResult, clearScenarios, getMatchStyle
+        };
+    }
+}).mount('#app');
+</script>
+
+</body>
+</html>
