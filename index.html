@@ -19,10 +19,15 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-        /* Poistetaan nuolivalitsimet numero-inputeista */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans antialiased p-4 md:p-8">
@@ -52,7 +57,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
         
-        <!-- VASEN PALSTA: Sarjataulukko -->
+        <!-- VASEN PALSTA: Sarjataulukko & Analyysi -->
         <div class="lg:col-span-7 flex flex-col gap-4">
             <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
                 
@@ -79,14 +84,20 @@
                         </thead>
                         <tbody>
                             <tr v-for="(team, index) in standings" :key="team.name" 
-                                class="border-b last:border-0 transition-colors"
+                                @click="selectedTeam = team.name"
+                                class="border-b last:border-0 transition-colors cursor-pointer group"
                                 :class="[
-                                    index === 0 ? 'bg-yellow-50/60 border-l-4 border-l-yellow-400' : 
-                                    index === 1 ? 'bg-gray-100/60 border-l-4 border-l-gray-400' : 
-                                    index === 2 ? 'bg-orange-50/60 border-l-4 border-l-orange-500' : 'border-l-4 border-l-transparent'
+                                    selectedTeam === team.name ? 'bg-blue-100/50' : 'hover:bg-gray-50',
+                                    index === 0 && selectedTeam !== team.name ? 'bg-yellow-50/60 border-l-4 border-l-yellow-400' : 
+                                    index === 1 && selectedTeam !== team.name ? 'bg-gray-100/60 border-l-4 border-l-gray-400' : 
+                                    index === 2 && selectedTeam !== team.name ? 'bg-orange-50/60 border-l-4 border-l-orange-500' : 'border-l-4 border-l-transparent',
+                                    selectedTeam === team.name ? '!border-l-blue-500' : ''
                                 ]">
-                                <td class="px-3 py-3 font-bold text-gray-400 text-center">{{ index + 1 }}.</td>
-                                <td class="px-2 py-3 font-bold text-gray-800 text-base whitespace-nowrap">{{ team.name }}</td>
+                                <td class="px-3 py-3 font-bold text-gray-400 text-center group-hover:text-blue-500">{{ index + 1 }}.</td>
+                                <td class="px-2 py-3 font-bold text-gray-800 text-base whitespace-nowrap group-hover:text-blue-600 flex items-center justify-between">
+                                    {{ team.name }}
+                                    <i v-if="selectedTeam === team.name" class="fa-solid fa-chevron-right text-blue-500 text-xs mr-2"></i>
+                                </td>
                                 <td class="px-1 py-3 text-center">{{ team.matches }}</td>
                                 <td class="px-1 py-3 text-center">{{ team.wins }}</td>
                                 <td class="px-1 py-3 text-center">{{ team.draws }}</td>
@@ -96,14 +107,42 @@
                                 <td class="px-1 py-3 text-center font-bold" :class="team.gd > 0 ? 'text-green-600' : (team.gd < 0 ? 'text-red-500' : '')">
                                     {{ team.gd > 0 ? '+' : '' }}{{ team.gd }}
                                 </td>
-                                <td class="px-3 py-3 text-center font-black text-xl text-brand">{{ team.pts }}</td>
+                                <td class="px-3 py-3 text-center font-black text-xl text-brand group-hover:text-blue-700">{{ team.pts }}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div class="bg-gray-50 p-3 text-xs text-gray-500 border-t flex justify-between">
-                    <span>Mestaruussarja jatkaa suoraan runkosarjan pisteistä.</span>
-                    <span>Sijoitus: Pisteet &rarr; Maaliero &rarr; Tehdyt maalit.</span>
+                
+                <!-- UUSI: Joukkueanalyysi (avautuu klikkaamalla) -->
+                <div v-if="teamAnalysis" class="bg-blue-50 border-t border-blue-200 p-5 relative animate-fade-in shadow-inner">
+                    <button @click="selectedTeam = null" class="absolute top-3 right-4 text-blue-400 hover:text-blue-600 text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <h3 class="font-black text-blue-900 text-xl mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-blue-500"></i> {{ teamAnalysis.name }} 
+                    </h3>
+                    <p class="text-xs text-blue-700 mb-4 font-semibold uppercase tracking-wider">Teoreettinen analyysi nykytilanteessa</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="bg-white p-3 rounded border border-blue-100 shadow-sm">
+                            <p class="text-blue-800 font-semibold mb-1">Mahdollinen sijoitus</p>
+                            <div class="flex items-baseline gap-2">
+                                <p class="font-black text-3xl text-blue-600">{{ teamAnalysis.bestRank }}. <span class="text-lg text-blue-400 font-normal">–</span> {{ teamAnalysis.worstRank }}.</p>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Nykysijoitus: <strong>{{ teamAnalysis.currentRank }}.</strong></p>
+                        </div>
+                        
+                        <div class="bg-white p-3 rounded border border-blue-100 shadow-sm">
+                            <p class="text-blue-800 font-semibold mb-1">Pisteodottama</p>
+                            <p class="font-bold text-gray-700">Minimi: <span class="text-red-500">{{ teamAnalysis.minPts }} p</span></p>
+                            <p class="font-bold text-gray-700">Maksimi: <span class="text-green-600">{{ teamAnalysis.maxPts }} p</span></p>
+                            <p class="text-xs text-gray-500 mt-1">Otteluita jäljellä: <strong>{{ teamAnalysis.remainingMatches }}</strong> kpl</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="!teamAnalysis" class="bg-gray-50 p-3 text-xs text-gray-500 border-t flex justify-between">
+                    <span>Mestaruussarja jatkaa suoraan runkosarjan pisteistä. Klikkaa joukkuetta nähdäksesi analyysin.</span>
                 </div>
             </div>
         </div>
@@ -128,9 +167,9 @@
                             
                             <!-- Joukkueet -->
                             <div class="flex items-center w-full xl:w-5/12 text-sm">
-                                <div class="flex-1 text-right truncate font-bold">{{ match.home }}</div>
+                                <div class="flex-1 text-right truncate font-bold" :class="{'text-blue-600': match.home === selectedTeam}">{{ match.home }}</div>
                                 <div class="px-2 text-gray-300">-</div>
-                                <div class="flex-1 truncate font-bold">{{ match.away }}</div>
+                                <div class="flex-1 truncate font-bold" :class="{'text-blue-600': match.away === selectedTeam}">{{ match.away }}</div>
                             </div>
 
                             <!-- Tuloksen syöttö (Jalkapallomalli) -->
@@ -172,7 +211,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Admin-tilan syöttö (vain manuaalinen) -->
+                                <!-- Admin-tilan syöttö -->
                                 <div v-else-if="mode === 'admin'" class="flex items-center bg-white border border-gray-300 rounded overflow-hidden shadow-sm">
                                     <input v-model.number="tempInputs[match.id].h" type="number" min="0" class="w-8 text-center py-1 outline-none font-bold bg-gray-50">
                                     <span class="text-gray-400 bg-gray-50 py-1">-</span>
@@ -201,6 +240,7 @@ const { createApp, ref, computed, watch, onMounted } = Vue;
 createApp({
     setup() {
         const mode = ref('scenario');
+        const selectedTeam = ref(null);
         
         // Runkosarjan lopputilanne pohjana
         const baseStats = {
@@ -211,6 +251,8 @@ createApp({
             'AC Oulu':    { matches: 22, wins: 10, draws: 4, losses: 8, gf: 25, ga: 25, pts: 34 },
             'VPS':        { matches: 22, wins: 9,  draws: 6, losses: 7, gf: 29, ga: 22, pts: 33 }
         };
+
+        const teamsList = Object.keys(baseStats);
 
         // Mestaruussarjan otteluohjelma (30 ottelua top-6 keskenään)
         const rawMatches = [
@@ -233,9 +275,8 @@ createApp({
 
         const officialResults = ref({});
         const scenarioResults = ref({});
-        const tempInputs = ref({}); // Manuaalista maalisyöttöä varten
+        const tempInputs = ref({});
 
-        // Alustetaan tempInputs kaikille peleille
         rawMatches.forEach(m => { tempInputs.value[m.id] = { h: null, a: null }; });
 
         onMounted(() => {
@@ -251,15 +292,12 @@ createApp({
         const matchesByDate = computed(() => {
             const grouped = {};
             rawMatches.forEach(m => {
-                // Piilotetaan viralliset tulokset skenaariotilassa selkeyden vuoksi
                 if (mode.value === 'scenario' && officialResults.value[m.id]) return;
-                
                 if(!grouped[m.date]) grouped[m.date] = [];
                 grouped[m.date].push(m);
             });
-            // Hieman robustimpi järjestely päivämäärille (esim "8.9." -> 908, "12.10." -> 1012)
             const parseDate = (d) => {
-                let parts = d.replace('.','').split('.'); // '8.9' -> ['8', '9']
+                let parts = d.replace('.','').split('.'); 
                 return parseInt(parts[1]) * 100 + parseInt(parts[0]);
             };
             return Object.keys(grouped).sort((a,b) => parseDate(a) - parseDate(b)).map(date => ({
@@ -282,7 +320,6 @@ createApp({
             const a = tempInputs.value[matchId].a;
             if(h !== null && a !== null && h !== '' && a !== '') {
                 setResult(matchId, `${h}-${a}`, target);
-                // Nollataan kentät tallennuksen jälkeen
                 tempInputs.value[matchId].h = null;
                 tempInputs.value[matchId].a = null;
             }
@@ -296,63 +333,46 @@ createApp({
         const clearScenarios = () => { if(confirm('Haluatko varmasti tyhjentää kaikki skenaariot?')) scenarioResults.value = {}; };
 
         const getMatchStyle = (matchId) => {
-            if (officialResults.value[matchId]) return 'bg-gray-50 border-gray-300 opacity-90';
-            if (mode.value === 'scenario' && scenarioResults.value[matchId]) return 'bg-blue-50/40 border-blue-300';
-            return 'bg-white border-gray-100 hover:border-gray-300';
+            const m = rawMatches.find(x => x.id === matchId);
+            const isSelected = selectedTeam.value && (m.home === selectedTeam.value || m.away === selectedTeam.value);
+            
+            if (officialResults.value[matchId]) return isSelected ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-300 opacity-90';
+            if (mode.value === 'scenario' && scenarioResults.value[matchId]) return isSelected ? 'bg-blue-100 border-blue-400 shadow-md' : 'bg-blue-50/40 border-blue-300';
+            return isSelected ? 'bg-blue-50 border-blue-300 shadow-sm' : 'bg-white border-gray-100 hover:border-gray-300';
         };
 
         const standings = computed(() => {
             let table = {};
-            // 1. Alustetaan pohjatilastot
             Object.keys(baseStats).forEach(team => {
                 table[team] = { 
-                    name: team, 
-                    matches: baseStats[team].matches, 
-                    wins: baseStats[team].wins, 
-                    draws: baseStats[team].draws, 
-                    losses: baseStats[team].losses, 
-                    gf: baseStats[team].gf, 
-                    ga: baseStats[team].ga, 
-                    gd: baseStats[team].gf - baseStats[team].ga,
-                    pts: baseStats[team].pts 
+                    name: team, matches: baseStats[team].matches, wins: baseStats[team].wins, 
+                    draws: baseStats[team].draws, losses: baseStats[team].losses, 
+                    gf: baseStats[team].gf, ga: baseStats[team].ga, 
+                    gd: baseStats[team].gf - baseStats[team].ga, pts: baseStats[team].pts 
                 };
             });
 
-            // 2. Lisätään pelatut ottelut (viralliset ja skenaariot)
             rawMatches.forEach(m => {
                 let res = officialResults.value[m.id];
                 if (mode.value === 'scenario' && !res) res = scenarioResults.value[m.id];
                 
                 if (res) {
-                    table[m.home].matches++;
-                    table[m.away].matches++;
-                    
-                    table[m.home].gf += res.home;
-                    table[m.home].ga += res.away;
-                    table[m.away].gf += res.away;
-                    table[m.away].ga += res.home;
-                    
+                    table[m.home].matches++; table[m.away].matches++;
+                    table[m.home].gf += res.home; table[m.home].ga += res.away;
+                    table[m.away].gf += res.away; table[m.away].ga += res.home;
                     table[m.home].gd = table[m.home].gf - table[m.home].ga;
                     table[m.away].gd = table[m.away].gf - table[m.away].ga;
                     
                     if (res.home > res.away) {
-                        table[m.home].wins++;
-                        table[m.away].losses++;
-                        table[m.home].pts += 3;
+                        table[m.home].wins++; table[m.away].losses++; table[m.home].pts += 3;
                     } else if (res.home === res.away) {
-                        table[m.home].draws++;
-                        table[m.away].draws++;
-                        table[m.home].pts += 1;
-                        table[m.away].pts += 1;
+                        table[m.home].draws++; table[m.away].draws++; table[m.home].pts += 1; table[m.away].pts += 1;
                     } else {
-                        table[m.away].wins++;
-                        table[m.home].losses++;
-                        table[m.away].pts += 3;
+                        table[m.away].wins++; table[m.home].losses++; table[m.away].pts += 3;
                     }
                 }
             });
 
-            // 3. Järjestetään Jalkapallosäännöillä: 1. Pisteet, 2. Maaliero, 3. Tehdyt maalit, 4. Voitot
             return Object.values(table).sort((a, b) => {
                 if (b.pts !== a.pts) return b.pts - a.pts;
                 if (b.gd !== a.gd) return b.gd - a.gd;
@@ -361,8 +381,65 @@ createApp({
             });
         });
 
+        // UUSI: Lasketaan valitun joukkueen matemaattiset maksimit ja minimit
+        const teamAnalysis = computed(() => {
+            if (!selectedTeam.value) return null;
+            
+            const currentStandings = standings.value;
+            const target = currentStandings.find(t => t.name === selectedTeam.value);
+            if (!target) return null;
+
+            // Selvitetään pelaamattomat ottelut (huomioidaan tila)
+            const playedIds = new Set([
+                ...Object.keys(officialResults.value),
+                ...(mode.value === 'scenario' ? Object.keys(scenarioResults.value) : [])
+            ]);
+            const unplayedMatches = rawMatches.filter(m => !playedIds.has(String(m.id)));
+
+            // Lasketaan jokaiselle joukkueelle jäljellä olevien otteluiden määrä
+            const remainingByTeam = {};
+            teamsList.forEach(t => remainingByTeam[t] = 0);
+            unplayedMatches.forEach(m => {
+                remainingByTeam[m.home]++;
+                remainingByTeam[m.away]++;
+            });
+
+            // Valitun joukkueen ääripisteet
+            const targetMaxPts = target.pts + (remainingByTeam[target.name] * 3);
+            const targetMinPts = target.pts;
+
+            let strictlyBetterCount = 0;
+            let strictlyWorseCount = 0;
+
+            currentStandings.forEach(other => {
+                if (other.name === target.name) return;
+
+                const otherMinPts = other.pts;
+                const otherMaxPts = other.pts + (remainingByTeam[other.name] * 3);
+
+                // Jos toisen joukkueen minimipisteet ovat enemmän kuin meidän maksimit, se on aina yläpuolella
+                if (otherMinPts > targetMaxPts) strictlyBetterCount++;
+                
+                // Jos toisen maksimipisteet ovat vähemmän kuin meidän minimit, se on aina alapuolella
+                if (otherMaxPts < targetMinPts) strictlyWorseCount++;
+            });
+
+            const bestRank = strictlyBetterCount + 1;
+            const worstRank = 6 - strictlyWorseCount;
+
+            return {
+                name: target.name,
+                currentRank: currentStandings.findIndex(t => t.name === target.name) + 1,
+                remainingMatches: remainingByTeam[target.name],
+                maxPts: targetMaxPts,
+                minPts: targetMinPts,
+                bestRank,
+                worstRank
+            };
+        });
+
         return {
-            mode, baseStats, matchesByDate, 
+            mode, baseStats, matchesByDate, selectedTeam, teamAnalysis,
             officialResults, scenarioResults, tempInputs, standings,
             setResult, saveTempResult, removeResult, clearScenarios, getMatchStyle
         };
