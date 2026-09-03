@@ -140,7 +140,7 @@
                         </div>
                     </div>
 
-                    <!-- UUSI: Mestaruuspolku -->
+                    <!-- Mestaruuspolku (v-html muotoiluille) -->
                     <div class="border-t border-blue-200 pt-4">
                         <h4 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-trophy text-yellow-500"></i> Mitä vaaditaan mestaruuteen?
@@ -149,7 +149,7 @@
                         <!-- Status-laatikko -->
                         <div class="p-3 rounded border shadow-sm mb-3" :class="teamAnalysis.statusStyle">
                             <p class="font-bold text-base mb-1">{{ teamAnalysis.titleStatusTitle }}</p>
-                            <p class="text-sm leading-relaxed">{{ teamAnalysis.titleDetails }}</p>
+                            <p class="text-sm leading-relaxed" v-html="teamAnalysis.titleDetails"></p>
                         </div>
 
                         <!-- Avainottelut -->
@@ -398,7 +398,6 @@ createApp({
             });
         });
 
-        // UUSI: Lasketaan Mestaruuspolku ja vaatimukset
         const teamAnalysis = computed(() => {
             if (!selectedTeam.value) return null;
             
@@ -434,7 +433,6 @@ createApp({
                 if (otherMinPts > targetMaxPts) strictlyBetterCount++;
                 if (otherMaxPts < targetMinPts) strictlyWorseCount++;
 
-                // Lasketaan, onko "other" uhka mestaruudelle, jos target voittaa kaikki omat pelinsä
                 let matchesAgainstTarget = 0;
                 unplayedMatches.forEach(m => {
                     if ((m.home === target.name && m.away === other.name) || 
@@ -443,7 +441,6 @@ createApp({
                     }
                 });
                 
-                // Maksimipisteet toiselle joukkueelle, kun se häviää kaikki pelit kohdejoukkueelle
                 const adjustedMaxOther = other.pts + (remainingByTeam[other.name] * 3) - (matchesAgainstTarget * 3);
                 
                 if (adjustedMaxOther >= targetMaxPts) {
@@ -461,8 +458,6 @@ createApp({
             const leader = currentStandings[0];
             const isSeasonOver = unplayedMatches.length === 0;
 
-            // Mestaruusstatuksen määrittely
-            let titleStatusType = '';
             let titleStatusTitle = '';
             let titleDetails = '';
             let statusStyle = '';
@@ -493,11 +488,9 @@ createApp({
                 }
             }
 
-            // Kärkipelien (Critical matches) poimiminen
             let criticalGames = [];
             if (!isSeasonOver && targetMaxPts >= leader.pts) {
                 const currentRank = currentStandings.findIndex(t => t.name === target.name);
-                // Kaikki edellä olevat + top 3 katsotaan kärkivastustajiksi
                 const topTeams = currentStandings.slice(0, Math.max(3, currentRank)).map(t=>t.name);
                 
                 unplayedMatches.forEach(m => {
