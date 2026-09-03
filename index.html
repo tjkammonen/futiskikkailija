@@ -113,7 +113,7 @@
                     </table>
                 </div>
                 
-                <!-- UUSI: Joukkueanalyysi (avautuu klikkaamalla) -->
+                <!-- Joukkueanalyysi & Mestaruuspolku -->
                 <div v-if="teamAnalysis" class="bg-blue-50 border-t border-blue-200 p-5 relative animate-fade-in shadow-inner">
                     <button @click="selectedTeam = null" class="absolute top-3 right-4 text-blue-400 hover:text-blue-600 text-lg">
                         <i class="fa-solid fa-xmark"></i>
@@ -123,7 +123,7 @@
                     </h3>
                     <p class="text-xs text-blue-700 mb-4 font-semibold uppercase tracking-wider">Teoreettinen analyysi nykytilanteessa</p>
                     
-                    <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="grid grid-cols-2 gap-4 text-sm mb-4">
                         <div class="bg-white p-3 rounded border border-blue-100 shadow-sm">
                             <p class="text-blue-800 font-semibold mb-1">Mahdollinen sijoitus</p>
                             <div class="flex items-baseline gap-2">
@@ -139,10 +139,35 @@
                             <p class="text-xs text-gray-500 mt-1">Otteluita jäljellä: <strong>{{ teamAnalysis.remainingMatches }}</strong> kpl</p>
                         </div>
                     </div>
+
+                    <!-- UUSI: Mestaruuspolku -->
+                    <div class="border-t border-blue-200 pt-4">
+                        <h4 class="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-yellow-500"></i> Mitä vaaditaan mestaruuteen?
+                        </h4>
+                        
+                        <!-- Status-laatikko -->
+                        <div class="p-3 rounded border shadow-sm mb-3" :class="teamAnalysis.statusStyle">
+                            <p class="font-bold text-base mb-1">{{ teamAnalysis.titleStatusTitle }}</p>
+                            <p class="text-sm leading-relaxed">{{ teamAnalysis.titleDetails }}</p>
+                        </div>
+
+                        <!-- Avainottelut -->
+                        <div v-if="teamAnalysis.criticalGames.length > 0" class="bg-white p-3 rounded border border-blue-100 shadow-sm">
+                            <p class="font-bold text-gray-800 text-sm mb-2"><i class="fa-regular fa-calendar-check text-blue-500 mr-1"></i> Tulevat kärkipelit (6p ottelut):</p>
+                            <ul class="text-sm text-gray-700 space-y-1.5 pl-2 border-l-2 border-blue-300 ml-1">
+                                <li v-for="game in teamAnalysis.criticalGames" :key="game">
+                                    <span class="font-semibold">{{ game.opponent }}</span> 
+                                    <span class="text-gray-500 text-xs ml-1">({{ game.location }} {{ game.date }})</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div v-if="!teamAnalysis" class="bg-gray-50 p-3 text-xs text-gray-500 border-t flex justify-between">
-                    <span>Mestaruussarja jatkaa suoraan runkosarjan pisteistä. Klikkaa joukkuetta nähdäksesi analyysin.</span>
+                    <span>Mestaruussarja jatkaa suoraan runkosarjan pisteistä. Klikkaa joukkuetta nähdäksesi mestaruuspolun.</span>
                 </div>
             </div>
         </div>
@@ -172,10 +197,9 @@
                                 <div class="flex-1 truncate font-bold" :class="{'text-blue-600': match.away === selectedTeam}">{{ match.away }}</div>
                             </div>
 
-                            <!-- Tuloksen syöttö (Jalkapallomalli) -->
+                            <!-- Tuloksen syöttö -->
                             <div class="w-full xl:w-7/12 flex justify-end shrink-0">
                                 
-                                <!-- Lukittu / Virallinen -->
                                 <div v-if="officialResults[match.id]" class="flex items-center gap-2">
                                     <span class="font-black text-lg bg-gray-200 px-3 py-1 rounded border border-gray-300 shadow-inner">
                                         {{ officialResults[match.id].home }} - {{ officialResults[match.id].away }}
@@ -184,7 +208,6 @@
                                     <button v-if="mode === 'admin'" @click="removeResult(match.id, 'official')" class="text-red-400 hover:text-red-600 ml-1 p-1"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                                 
-                                <!-- Skenaario valittuna -->
                                 <div v-else-if="mode === 'scenario' && scenarioResults[match.id]" class="flex items-center gap-2">
                                     <span class="font-black text-lg text-blue-700 bg-blue-100 px-3 py-1 rounded border border-blue-300 shadow-inner italic">
                                         {{ scenarioResults[match.id].home }} - {{ scenarioResults[match.id].away }}
@@ -192,15 +215,12 @@
                                     <button @click="removeResult(match.id, 'scenario')" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                                 
-                                <!-- Ei tulosta - Syöttökentät -->
                                 <div v-else-if="mode === 'scenario'" class="flex items-center gap-2">
-                                    <!-- 1x2 Pikanapit -->
                                     <div class="flex bg-gray-100 rounded border border-gray-200 overflow-hidden shadow-sm">
                                         <button @click="setResult(match.id, '1-0', 'scenario')" class="px-2.5 py-1 text-xs font-bold hover:bg-gray-200 border-r border-gray-200 text-gray-700">1</button>
                                         <button @click="setResult(match.id, '1-1', 'scenario')" class="px-2.5 py-1 text-xs font-bold hover:bg-gray-200 border-r border-gray-200 text-gray-700">X</button>
                                         <button @click="setResult(match.id, '0-1', 'scenario')" class="px-2.5 py-1 text-xs font-bold hover:bg-gray-200 text-gray-700">2</button>
                                     </div>
-                                    <!-- Manuaalinen maalisyöttö -->
                                     <div class="flex items-center bg-white border border-gray-300 rounded overflow-hidden shadow-sm">
                                         <input v-model.number="tempInputs[match.id].h" type="number" min="0" class="w-7 text-center py-1 outline-none font-bold text-sm bg-gray-50 focus:bg-blue-50">
                                         <span class="text-gray-400 bg-gray-50 py-1">-</span>
@@ -211,7 +231,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Admin-tilan syöttö -->
                                 <div v-else-if="mode === 'admin'" class="flex items-center bg-white border border-gray-300 rounded overflow-hidden shadow-sm">
                                     <input v-model.number="tempInputs[match.id].h" type="number" min="0" class="w-8 text-center py-1 outline-none font-bold bg-gray-50">
                                     <span class="text-gray-400 bg-gray-50 py-1">-</span>
@@ -242,7 +261,6 @@ createApp({
         const mode = ref('scenario');
         const selectedTeam = ref(null);
         
-        // Runkosarjan lopputilanne pohjana
         const baseStats = {
             'KuPS':       { matches: 22, wins: 12, draws: 7, losses: 3, gf: 38, ga: 23, pts: 43 },
             'FC Inter':   { matches: 22, wins: 11, draws: 9, losses: 2, gf: 29, ga: 16, pts: 42 },
@@ -254,7 +272,6 @@ createApp({
 
         const teamsList = Object.keys(baseStats);
 
-        // Mestaruussarjan otteluohjelma (30 ottelua top-6 keskenään)
         const rawMatches = [
             { date: '8.9.', home: 'VPS', away: 'AC Oulu' }, { date: '8.9.', home: 'IF Gnistan', away: 'KuPS' },
             { date: '9.9.', home: 'HJK', away: 'FC Inter' }, { date: '12.9.', home: 'AC Oulu', away: 'IF Gnistan' },
@@ -381,7 +398,7 @@ createApp({
             });
         });
 
-        // UUSI: Lasketaan valitun joukkueen matemaattiset maksimit ja minimit
+        // UUSI: Lasketaan Mestaruuspolku ja vaatimukset
         const teamAnalysis = computed(() => {
             if (!selectedTeam.value) return null;
             
@@ -389,27 +406,24 @@ createApp({
             const target = currentStandings.find(t => t.name === selectedTeam.value);
             if (!target) return null;
 
-            // Selvitetään pelaamattomat ottelut (huomioidaan tila)
             const playedIds = new Set([
                 ...Object.keys(officialResults.value),
                 ...(mode.value === 'scenario' ? Object.keys(scenarioResults.value) : [])
             ]);
             const unplayedMatches = rawMatches.filter(m => !playedIds.has(String(m.id)));
 
-            // Lasketaan jokaiselle joukkueelle jäljellä olevien otteluiden määrä
             const remainingByTeam = {};
             teamsList.forEach(t => remainingByTeam[t] = 0);
             unplayedMatches.forEach(m => {
-                remainingByTeam[m.home]++;
-                remainingByTeam[m.away]++;
+                remainingByTeam[m.home]++; remainingByTeam[m.away]++;
             });
 
-            // Valitun joukkueen ääripisteet
             const targetMaxPts = target.pts + (remainingByTeam[target.name] * 3);
             const targetMinPts = target.pts;
 
             let strictlyBetterCount = 0;
             let strictlyWorseCount = 0;
+            const threats = [];
 
             currentStandings.forEach(other => {
                 if (other.name === target.name) return;
@@ -417,15 +431,91 @@ createApp({
                 const otherMinPts = other.pts;
                 const otherMaxPts = other.pts + (remainingByTeam[other.name] * 3);
 
-                // Jos toisen joukkueen minimipisteet ovat enemmän kuin meidän maksimit, se on aina yläpuolella
                 if (otherMinPts > targetMaxPts) strictlyBetterCount++;
-                
-                // Jos toisen maksimipisteet ovat vähemmän kuin meidän minimit, se on aina alapuolella
                 if (otherMaxPts < targetMinPts) strictlyWorseCount++;
+
+                // Lasketaan, onko "other" uhka mestaruudelle, jos target voittaa kaikki omat pelinsä
+                let matchesAgainstTarget = 0;
+                unplayedMatches.forEach(m => {
+                    if ((m.home === target.name && m.away === other.name) || 
+                        (m.away === target.name && m.home === other.name)) {
+                        matchesAgainstTarget++;
+                    }
+                });
+                
+                // Maksimipisteet toiselle joukkueelle, kun se häviää kaikki pelit kohdejoukkueelle
+                const adjustedMaxOther = other.pts + (remainingByTeam[other.name] * 3) - (matchesAgainstTarget * 3);
+                
+                if (adjustedMaxOther >= targetMaxPts) {
+                    const diff = adjustedMaxOther - targetMaxPts;
+                    if (diff > 0) {
+                        threats.push(`<b>${other.name}</b> (väh. ${diff} p)`);
+                    } else if (diff === 0) {
+                        threats.push(`<b>${other.name}</b> (maaliero)`);
+                    }
+                }
             });
 
             const bestRank = strictlyBetterCount + 1;
             const worstRank = 6 - strictlyWorseCount;
+            const leader = currentStandings[0];
+            const isSeasonOver = unplayedMatches.length === 0;
+
+            // Mestaruusstatuksen määrittely
+            let titleStatusType = '';
+            let titleStatusTitle = '';
+            let titleDetails = '';
+            let statusStyle = '';
+
+            if (isSeasonOver) {
+                if (target.name === leader.name) {
+                    titleStatusTitle = 'Mestaruus on ratkennut!';
+                    titleDetails = 'Joukkue on varmistanut Veikkausliigan mestaruuden!';
+                    statusStyle = 'bg-yellow-50 text-yellow-900 border-yellow-300';
+                } else {
+                    titleStatusTitle = 'Kausi päättynyt';
+                    titleDetails = `Lopullinen sijoitus on ${currentStandings.findIndex(t => t.name === target.name) + 1}.`;
+                    statusStyle = 'bg-gray-100 text-gray-700 border-gray-300';
+                }
+            } else if (targetMaxPts < leader.pts) {
+                titleStatusTitle = 'Mahdollisuus menetetty';
+                titleDetails = 'Joukkue ei voi enää saavuttaa sarjakärkeä matemaattisesti. Katseet on käännettävä muihin sijoituksiin.';
+                statusStyle = 'bg-red-50 text-red-900 border-red-200';
+            } else {
+                if (threats.length === 0) {
+                    titleStatusTitle = 'Mestaruus on omissa käsissä!';
+                    titleDetails = `Voittamalla kaikki ${remainingByTeam[target.name]} jäljellä olevaa otteluaan joukkue varmistaa vähintään jaetun kärkipaikan, riippumatta muiden tuloksista.`;
+                    statusStyle = 'bg-green-50 text-green-900 border-green-300';
+                } else {
+                    titleStatusTitle = 'Vaatii ristiinpelaamista';
+                    titleDetails = `Omien voittojen lisäksi joukkue tarvitsee apuja muilta. Näiden joukkueiden on pudotettava pisteitä riittävästi: <span class="block mt-1 font-mono text-sm">${threats.join(' ja ')}</span>`;
+                    statusStyle = 'bg-orange-50 text-orange-900 border-orange-300';
+                }
+            }
+
+            // Kärkipelien (Critical matches) poimiminen
+            let criticalGames = [];
+            if (!isSeasonOver && targetMaxPts >= leader.pts) {
+                const currentRank = currentStandings.findIndex(t => t.name === target.name);
+                // Kaikki edellä olevat + top 3 katsotaan kärkivastustajiksi
+                const topTeams = currentStandings.slice(0, Math.max(3, currentRank)).map(t=>t.name);
+                
+                unplayedMatches.forEach(m => {
+                    if (m.home === target.name || m.away === target.name) {
+                        const opponent = m.home === target.name ? m.away : m.home;
+                        const isHome = m.home === target.name;
+                        const oppStanding = currentStandings.find(t => t.name === opponent);
+                        
+                        if (oppStanding.pts >= target.pts || topTeams.includes(opponent)) {
+                            criticalGames.push({
+                                opponent: opponent,
+                                location: isHome ? 'Kotipeli' : 'Vieraspeli',
+                                date: m.date
+                            });
+                        }
+                    }
+                });
+            }
 
             return {
                 name: target.name,
@@ -434,7 +524,11 @@ createApp({
                 maxPts: targetMaxPts,
                 minPts: targetMinPts,
                 bestRank,
-                worstRank
+                worstRank,
+                titleStatusTitle,
+                titleDetails,
+                statusStyle,
+                criticalGames
             };
         });
 
