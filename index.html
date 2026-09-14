@@ -262,20 +262,18 @@ createApp({
         const selectedTeam = ref(null);
         
         const baseStats = {
-            'KuPS':       { matches: 23, wins: 12, draws: 8, losses: 3, gf: 39, ga: 24, pts: 44 },
+            'KuPS':       { matches: 24, wins: 12, draws: 9, losses: 3, gf: 39, ga: 24, pts: 45 },
             'FC Inter':   { matches: 23, wins: 11, draws: 9, losses: 3, gf: 30, ga: 18, pts: 42 },
-            'HJK':        { matches: 23, wins: 12, draws: 4, losses: 7, gf: 38, ga: 29, pts: 40 },
-            'IF Gnistan': { matches: 23, wins: 10, draws: 7, losses: 6, gf: 37, ga: 30, pts: 37 },
-            'AC Oulu':    { matches: 23, wins: 10, draws: 4, losses: 9, gf: 25, ga: 26, pts: 34 },
+            'HJK':        { matches: 24, wins: 12, draws: 5, losses: 7, gf: 38, ga: 28, pts: 41 },
+            'IF Gnistan': { matches: 24, wins: 11, draws: 7, losses: 6, gf: 39, ga: 31, pts: 40 },
+            'AC Oulu':    { matches: 24, wins: 10, draws: 4, losses: 10, gf: 26, ga: 28, pts: 34 },
             'VPS':        { matches: 23, wins: 10,  draws: 6, losses: 7, gf: 30, ga: 22, pts: 36 }
         };
 
         const teamsList = Object.keys(baseStats);
 
         const rawMatches = [
-            
-            { date: '12.9.', home: 'AC Oulu', away: 'IF Gnistan' },
-            { date: '13.9.', home: 'KuPS', away: 'HJK' }, { date: '14.9.', home: 'FC Inter', away: 'VPS' },
+            { date: '14.9.', home: 'FC Inter', away: 'VPS' },
             { date: '18.9.', home: 'AC Oulu', away: 'FC Inter' }, { date: '18.9.', home: 'IF Gnistan', away: 'HJK' },
             { date: '19.9.', home: 'VPS', away: 'KuPS' }, { date: '7.10.', home: 'IF Gnistan', away: 'FC Inter' },
             { date: '8.10.', home: 'HJK', away: 'VPS' }, { date: '8.10.', home: 'KuPS', away: 'AC Oulu' },
